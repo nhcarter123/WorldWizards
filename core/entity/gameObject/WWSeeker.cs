@@ -11,6 +11,7 @@ namespace WorldWizards.core.entity.gameObject
         int count = 0;
 
         bool idle = true;
+        bool attacking = false;
 
         int turnSpeed = 30;
         float maxWalkSpeed = 0.5f;
@@ -18,6 +19,7 @@ namespace WorldWizards.core.entity.gameObject
         float acceleration = 0.025f;
         int runSpeed = 2;
 
+        float attackDistance = 1;
         float aggroDistance = 8;
         float deAggraDistance = 16;
 
@@ -57,6 +59,13 @@ namespace WorldWizards.core.entity.gameObject
             if (dist < aggroDistance)
             {
                 idle = false;
+                if (dist < attackDistance)
+                {
+                    attacking = true;
+                } else
+                {
+                    attacking = false;
+                }
             } else if (dist > deAggraDistance)
             {
                 idle = true;
@@ -68,34 +77,8 @@ namespace WorldWizards.core.entity.gameObject
             //if state is idle
             if (idle)
             {
-                if (walkSpeed > 0)
-                {
-                    walkSpeed -= acceleration;
-                    if (walkSpeed < 0)
-                    {
-                        walkSpeed = 0;
-                    }
-                }
+                Deccelerate();
             } else {
-                //update path every three seconds
-                count++;
-                if (count > 180)
-                {
-                    count = 0;
-
-
-                    StartPath();
-
-                }
-
-                //change walkspeed based on direction
-                if (walkSpeed < maxWalkSpeed)
-                {
-                    var angleDiff = Quaternion.LookRotation(targetLocation - transform.position);
-                    Debug.Log(angleDiff);
-                    walkSpeed += acceleration * 1;
-                }
-
                 //rotate towards the target in one dimention
                 Vector3 targetLocationVector = targetLocation;
                 Vector3 positionVector = transform.position;
@@ -104,8 +87,34 @@ namespace WorldWizards.core.entity.gameObject
                 var targetDir = Quaternion.LookRotation(targetLocationVector - positionVector);
                 transform.rotation = Quaternion.RotateTowards(transform.rotation, targetDir, Time.deltaTime * turnSpeed);
 
-                //move along the path
-                transform.position = Vector3.MoveTowards(transform.position, pathPoints[pathPoints.Count - 1], walkSpeed * Time.deltaTime);
+                if (attacking)
+                {
+                    Deccelerate();
+                }
+                else
+                {
+
+                    //update path every three seconds
+                    count++;
+                    if (count > 180)
+                    {
+                        count = 0;
+
+
+                        StartPath();
+                    }
+
+                    //change walkspeed based on direction
+                    if (walkSpeed < maxWalkSpeed)
+                    {
+                        var angleDiff = Quaternion.LookRotation(targetLocation - transform.position);
+                        Debug.Log(angleDiff);
+                        walkSpeed += acceleration * 1;
+                    }
+
+                    //move along the path
+                    transform.position = Vector3.MoveTowards(transform.position, pathPoints[pathPoints.Count - 1], walkSpeed * Time.deltaTime);
+                }
             }
 
         }
@@ -124,6 +133,18 @@ namespace WorldWizards.core.entity.gameObject
                 Debug.Log(p.vectorPath);
                 // Yay, now we can get a Vector3 representation of the path
                 // from p.vectorPath
+            }
+        }
+
+        public void Deccelerate()
+        {
+            if (walkSpeed > 0)
+            {
+                walkSpeed -= acceleration;
+                if (walkSpeed < 0)
+                {
+                    walkSpeed = 0;
+                }
             }
         }
     }
