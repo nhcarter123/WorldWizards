@@ -28,7 +28,7 @@ namespace WorldWizards.core.entity.gameObject
         public void Start()
         {
             //GameObject seeker_object = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            SphereCollider sc = gameObject.AddComponent<SphereCollider>() as SphereCollider;
+            //SphereCollider sc = gameObject.AddComponent<SphereCollider>() as SphereCollider;
             var seeker = gameObject.GetComponent<Seeker>();
             anim = gameObject.GetComponent<Animator>();
             // Start a new path request from the current position to a position 10 units forward.

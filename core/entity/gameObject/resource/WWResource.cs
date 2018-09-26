@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using WorldWizards.core.controller.resources;
 using WorldWizards.core.entity.gameObject.resource.metaData;
 

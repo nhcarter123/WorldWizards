@@ -1,4 +1,4 @@
-﻿namespace WorldWizards.core.entity.gameObject.resource.metaData
+namespace WorldWizards.core.entity.gameObject.resource.metaData
 {
     // @author - Brian Keeley-DeBonis bjkeeleydebonis@wpi.edu
     /// <summary>

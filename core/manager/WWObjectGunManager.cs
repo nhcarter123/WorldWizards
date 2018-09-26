@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEngine;
 using WorldWizards.core.controller.resources;
 using WorldWizards.core.entity.common;
@@ -16,7 +16,7 @@ namespace WorldWizards.core.manager
     {
         private bool doFilter;
         private WWType filterType = WWType.None;
-        private static string assetBundleTag = "ww_basic_assets";
+        private static string assetBundleTag = "characters";
 //        private static string assetBundleTag = "arteria";
         
         // The list of objects for the object gun

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 namespace WorldWizards.core.entity.gameObject.resource.metaData
 {

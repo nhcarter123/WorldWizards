@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using WorldWizards.core.controller.resources;
@@ -44,7 +44,7 @@ namespace WorldWizards.core.experimental
 
             foreach (string s in ResourceLoader.FindAssetBundlePaths()) Debug.Log(s);
 
-            possibleTiles = WWResourceController.GetResourceKeysByAssetBundle("ww_basic_assets");
+            possibleTiles = WWResourceController.GetResourceKeysByAssetBundle("characters");
             Debug.Log(possibleTiles.Count);
         }
 
