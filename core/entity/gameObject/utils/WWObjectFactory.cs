@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using WorldWizards.core.controller.resources;
@@ -75,7 +75,7 @@ namespace WorldWizards.core.entity.gameObject.utils
             var wwObject = gameObject.AddComponent(type) as WWObject;
 
             // Scale the object to the current tile scale.
-            wwObject.transform.localScale = Vector3.one * CoordinateHelper.tileLengthScale;
+            wwObject.transform.localScale = Vector3.one * CoordinateHelper.tileLengthScale * metadata.wwObjectMetadata.baseTileSize;
 
             // remove the WWResourceMetadata component for a microptimization
 #if UNITY_EDITOR

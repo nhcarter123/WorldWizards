@@ -10,24 +10,29 @@ namespace WorldWizards.core.entity.gameObject
     {
         int count = 0;
 
+        //states
         bool idle = true;
         bool attacking = false;
+        bool alive = true;
 
+        //movement stats
         int turnSpeed = 30;
         float maxWalkSpeed = 0.5f;
         float walkSpeed = 0;
         float acceleration = 0.025f;
         int runSpeed = 2;
 
-        float attackDistance = 1;
+        float attackDistance = 2.5f;
         float aggroDistance = 8;
         float deAggraDistance = 16;
+
+        float health = 100;
 
         Vector3 targetLocation = new Vector3(0,0,0);
         Animator anim;
         List<Vector3> pathPoints;
 
-        public void Start()
+        private void Start()
         {
             //GameObject seeker_object = GameObject.CreatePrimitive(PrimitiveType.Cube);
             //SphereCollider sc = gameObject.AddComponent<SphereCollider>() as SphereCollider;
@@ -40,86 +45,102 @@ namespace WorldWizards.core.entity.gameObject
             // It has just been queued for calculation
         }
 
-        public void StartPath()
+        private void StartPath()
         {
             var seeker = GetComponent<Seeker>();
             seeker.StartPath(transform.position, targetLocation, OnPathComplete);
         }
 
-        public void Update()
+        private void Update()
         {
-            //get targt location
-            targetLocation = Camera.main.transform.position;
-
-            //get distance to target
-            var dist = (targetLocation - transform.position).magnitude;
-            Debug.Log(dist);
-
-            //aggro or deaggro based on distance
-            if (dist < aggroDistance)
+            if (health > 0)
             {
-                idle = false;
-                if (dist < attackDistance)
+                //get targt location
+                targetLocation = Camera.main.transform.position;
+
+                //get distance to target
+                var dist = (targetLocation - transform.position).magnitude;
+                Debug.Log(dist);
+
+                //aggro or deaggro based on distance
+                if (dist < aggroDistance)
                 {
-                    attacking = true;
-                } else
-                {
-                    attacking = false;
+                    idle = false;
+                    if (dist < attackDistance)
+                    {
+                        attacking = true;
+
+                    }
+                    else
+                    {
+                        attacking = false;
+                    }
+                    anim.SetBool("Attacking", attacking);
                 }
-            } else if (dist > deAggraDistance)
-            {
-                idle = true;
-            }
+                else if (dist > deAggraDistance)
+                {
+                    idle = true;
+                }
 
-            //set animation
-            anim.SetFloat("Forward", walkSpeed);
+                //set animation
+                anim.SetFloat("Forward", walkSpeed);
 
-            //if state is idle
-            if (idle)
-            {
-                Deccelerate();
-            } else {
-                //rotate towards the target in one dimention
-                Vector3 targetLocationVector = targetLocation;
-                Vector3 positionVector = transform.position;
-                targetLocationVector.y = 0;
-                positionVector.y = 0;
-                var targetDir = Quaternion.LookRotation(targetLocationVector - positionVector);
-                transform.rotation = Quaternion.RotateTowards(transform.rotation, targetDir, Time.deltaTime * turnSpeed);
-
-                if (attacking)
+                //if state is idle
+                if (idle)
                 {
                     Deccelerate();
                 }
                 else
                 {
+                    //rotate towards the target in one dimention
+                    Vector3 targetLocationVector = targetLocation;
+                    Vector3 positionVector = transform.position;
+                    targetLocationVector.y = 0;
+                    positionVector.y = 0;
+                    var targetDir = Quaternion.LookRotation(targetLocationVector - positionVector);
+                    transform.rotation = Quaternion.RotateTowards(transform.rotation, targetDir, Time.deltaTime * turnSpeed);
 
-                    //update path every three seconds
-                    count++;
-                    if (count > 180)
+                    if (attacking)
                     {
-                        count = 0;
-
-
-                        StartPath();
+                        Deccelerate();
                     }
-
-                    //change walkspeed based on direction
-                    if (walkSpeed < maxWalkSpeed)
+                    else
                     {
-                        var angleDiff = Quaternion.LookRotation(targetLocation - transform.position);
-                        Debug.Log(angleDiff);
-                        walkSpeed += acceleration * 1;
-                    }
 
-                    //move along the path
-                    transform.position = Vector3.MoveTowards(transform.position, pathPoints[pathPoints.Count - 1], walkSpeed * Time.deltaTime);
+                        //update path every three seconds
+                        count++;
+                        if (count > 180)
+                        {
+                            count = 0;
+
+
+                            StartPath();
+                        }
+
+                        //change walkspeed based on direction
+                        if (walkSpeed < maxWalkSpeed)
+                        {
+                            var angleDiff = Quaternion.LookRotation(targetLocation - transform.position);
+                            Debug.Log(angleDiff);
+                            walkSpeed += acceleration * 1;
+                        }
+
+                        //move along the path
+                        transform.position = Vector3.MoveTowards(transform.position, pathPoints[pathPoints.Count - 1], walkSpeed * Time.deltaTime);
+                    }
                 }
+            } else if (alive)
+            {
+                alive = false;
+                Die();
+            } else
+            {
+
             }
 
         }
 
-        public void OnPathComplete(Path p)
+        private void OnPathComplete(Path p)
         {
             // We got our path back
             if (p.error)
@@ -136,7 +157,7 @@ namespace WorldWizards.core.entity.gameObject
             }
         }
 
-        public void Deccelerate()
+        private void Deccelerate()
         {
             if (walkSpeed > 0)
             {
@@ -146,6 +167,16 @@ namespace WorldWizards.core.entity.gameObject
                     walkSpeed = 0;
                 }
             }
+        }
+
+        private void Die()
+        {
+            anim.SetBool("Dead", alive);
+        }
+
+        public void Death()
+        {
+            Destroy(this);
         }
     }
 
