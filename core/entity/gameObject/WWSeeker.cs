@@ -31,23 +31,23 @@ namespace WorldWizards.core.entity.gameObject
         Vector3 targetLocation = new Vector3(0,0,0);
         Animator anim;
         List<Vector3> pathPoints;
+        Seeker seeker;
 
         private void Start()
         {
             //GameObject seeker_object = GameObject.CreatePrimitive(PrimitiveType.Cube);
             //SphereCollider sc = gameObject.AddComponent<SphereCollider>() as SphereCollider;
-            var seeker = gameObject.GetComponent<Seeker>();
+            seeker = gameObject.GetComponent<Seeker>();
             anim = gameObject.GetComponent<Animator>();
             // Start a new path request from the current position to a position 10 units forward.
             // When the path has been calculated, it will be returned to the function OnPathComplete unless it was canceled by another path request
-            seeker.StartPath(transform.position, transform.position + transform.forward * 20, OnPathComplete);
+            //seeker.StartPath(transform.position, transform.position + transform.forward * 20, OnPathComplete);
             // Note that the path is NOT calculated at this stage
             // It has just been queued for calculation
         }
 
         private void StartPath()
         {
-            var seeker = GetComponent<Seeker>();
             seeker.StartPath(transform.position, targetLocation, OnPathComplete);
         }
 
@@ -170,7 +170,7 @@ namespace WorldWizards.core.entity.gameObject
             anim.SetBool("Dead", alive);
         }
 
-        private void Death()
+        public void Death()
         {
             Destroy(this);
         }
