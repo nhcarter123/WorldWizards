@@ -69,13 +69,9 @@ namespace WorldWizards.core.entity.gameObject
                     if (dist < attackDistance)
                     {
                         attacking = true;
+                        anim.SetBool("Attacking", attacking);
 
                     }
-                    else
-                    {
-                        attacking = false;
-                    }
-                    anim.SetBool("Attacking", attacking);
                 }
                 else if (dist > deAggraDistance)
                 {
@@ -174,9 +170,16 @@ namespace WorldWizards.core.entity.gameObject
             anim.SetBool("Dead", alive);
         }
 
-        public void Death()
+        private void Death()
         {
             Destroy(this);
+        }
+
+        public void AttackEnd()
+        {
+            attacking = false;
+            anim.SetBool("Attacking", attacking);
+            Debug.LogWarning("dfsdfsdfdsfdsdf");
         }
     }
 
