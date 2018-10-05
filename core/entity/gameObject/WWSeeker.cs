@@ -14,17 +14,18 @@ namespace WorldWizards.core.entity.gameObject
         bool idle = true;
         bool attacking = false;
         bool alive = true;
+        bool fade = false;
 
         //movement stats
         int turnSpeed = 30;
-        float maxWalkSpeed = 0.5f;
+        float maxWalkSpeed = 1.8f;
         float walkSpeed = 0;
-        float acceleration = 0.025f;
-        int runSpeed = 2;
+        float acceleration = 0.08f;
+        int runSpeed = 4;
 
-        float attackDistance = 2.5f;
-        float aggroDistance = 8;
-        float deAggraDistance = 16;
+        float attackDistance = 4.5f;
+        float aggroDistance = 14;
+        float deAggraDistance = 20;
 
         float health = 100;
 
@@ -32,6 +33,9 @@ namespace WorldWizards.core.entity.gameObject
         Animator anim;
         List<Vector3> pathPoints;
         Seeker seeker;
+        SkinnedMeshRenderer[] rend;
+
+        Material[] transparentMaterials;
 
         private void Start()
         {
@@ -39,6 +43,12 @@ namespace WorldWizards.core.entity.gameObject
             //SphereCollider sc = gameObject.AddComponent<SphereCollider>() as SphereCollider;
             seeker = gameObject.GetComponent<Seeker>();
             anim = gameObject.GetComponent<Animator>();
+            rend = gameObject.GetComponentsInChildren<SkinnedMeshRenderer>();
+            for (var i = 0; i < rend.Length; i++)
+            {
+                transparentMaterials[i] = rend[i].materials[0];
+                rend[i].material = rend[i].materials[1];
+            }
             // Start a new path request from the current position to a position 10 units forward.
             // When the path has been calculated, it will be returned to the function OnPathComplete unless it was canceled by another path request
             //seeker.StartPath(transform.position, transform.position + transform.forward * 20, OnPathComplete);
@@ -79,7 +89,7 @@ namespace WorldWizards.core.entity.gameObject
                 }
 
                 //set animation
-                anim.SetFloat("Forward", walkSpeed);
+                anim.SetFloat("Forward", (walkSpeed + 1f)/2f);
 
                 //if state is idle
                 if (idle)
@@ -125,15 +135,27 @@ namespace WorldWizards.core.entity.gameObject
                         transform.position = Vector3.MoveTowards(transform.position, pathPoints[pathPoints.Count - 1], walkSpeed * Time.deltaTime);
                     }
                 }
-            } else if (alive)
-            {
-                alive = false;
-                Die();
-            } else
-            {
-
             }
-
+            else if (alive)
+            {
+                Die();
+            }
+            else
+            {
+                if (fade)
+                {
+                    for (var i = 0; i < rend.Length; i++)
+                    {
+                        Color color = rend[i].material.GetColor("_Color");
+                        color.a -= 0.003f;
+                        rend[i].material.SetColor("_Color", color);
+                        if (color.a <= 0)
+                        {
+                            Destroy(gameObject);
+                        }
+                    }
+                }
+            }
         }
 
         private void OnPathComplete(Path p)
@@ -167,19 +189,24 @@ namespace WorldWizards.core.entity.gameObject
 
         private void Die()
         {
-            anim.SetBool("Dead", alive);
+            alive = false;
+            anim.SetBool("Dead", true);
+            anim.Play("Death");
+            for (var i = 0; i < rend.Length; i++)
+            {
+                rend[i].material = transparentMaterials[i];
+            }
         }
 
         public void Death()
         {
-            Destroy(this);
+            fade = true;
         }
 
         public void AttackEnd()
         {
             attacking = false;
             anim.SetBool("Attacking", attacking);
-            Debug.LogWarning("dfsdfsdfdsfdsdf");
         }
     }
 
