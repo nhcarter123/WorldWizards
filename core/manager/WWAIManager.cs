@@ -1,13 +1,6 @@
-using Pathfinding;
-using System.Collections.Generic;
 using UnityEngine;
-using WorldWizards.core.entity.gameObject;
-using WorldWizards.core.controller.resources;
-
-using WorldWizards.core.entity.coordinate;
-using WorldWizards.core.entity.coordinate.utils;
-using WorldWizards.core.entity.gameObject.utils;
-using WorldWizards.core.entity.common;
+using Pathfinding.RVO;
+using Pathfinding;
 
 namespace WorldWizards.core.manager
 {
@@ -19,39 +12,49 @@ namespace WorldWizards.core.manager
 
     public class WWAIManager : Manager
     {
-       
+
+        LayerGridGraph LGG;
+
         public WWAIManager()
         {
             GameObject obj = new GameObject("AIScript");
             obj.transform.position = new Vector3(0.0f, 0.0f, 0.0f);
             obj.AddComponent<AstarPath>();
-
-            /*GridGraph gridGraph = AstarPath.active.data.gridGraph;
-            PointGraph pointGraph = AstarPath.active.data.pointGraph;
-            RecastGraph recastGraph = AstarPath.active.data.recastGraph;
-            NavMeshGraph navmeshGraph = AstarPath.active.data.navmesh;
-            LayerGridGraph layerGridGraph = AstarPath.active.data.layerGridGraph;
-            NavGraph[] allGraphs = AstarPath.active.data.graphs;*/
+            obj.AddComponent<RVOSimulator>();
+            obj.AddComponent<RVOGridGraph>();
+            ProceduralGridMover gridMover = obj.AddComponent<ProceduralGridMover>();
+            gridMover.target = Camera.main.transform;
+            gridMover.updateDistance = 15;
+            gridMover.floodFill = true;
 
             // This holds all graph data
             AstarData data = AstarPath.active.data;
 
             // This creates a Grid Graph
-            LayerGridGraph gg = data.AddGraph(typeof(LayerGridGraph)) as LayerGridGraph;
+            LGG = data.AddGraph(typeof(LayerGridGraph)) as LayerGridGraph;
 
             // Setup a grid graph with some values
-            int width = 200;
-            int depth = 200;
-            float nodeSize = 0.5f;
+            int width = 70;
+            int depth = 70;
+            float nodeSize = 0.35f;
 
-            gg.center = new Vector3(0, 0, 0);
+            LGG.center = new Vector3(0,0,0);
 
             // Updates internal size from the above values
-            gg.SetDimensions(width, depth, nodeSize);
-            //gg.collision.mask = LayerMask.GetMask("Water");
+            LGG.SetDimensions(width, depth, nodeSize);
+
+            LGG.collision.mask = LayerMask.GetMask("Obstacles");
+
+            //set erode iterations to givebetter edges for obstacles
+            LGG.erodeIterations = 0;
 
             // Scans all graphs
-            gg.active.Scan();
+            LGG.active.Scan();
+        }
+
+        public void RefreshGrid ()
+        {
+            LGG.active.Scan();
         }
     }
 }
