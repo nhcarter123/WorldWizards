@@ -17,8 +17,12 @@ namespace WorldWizards.core.entity.gameObject
 
         public string[] options = new string[] { "None", "Attack", "Flee", "Regroup" };
         public string[] options2 = new string[] { "None", "Health", "Allies", "Enemies" };
+        public string[] options3 = new string[] { "None", "Health", "Allies", "Enemies" };
+
+        List<string> options4 = new List<string>();
         List<int> selectionsA = new List<int>() { 0 };
         List<int> selectionsB = new List<int>();
+        List<AnimationCurve> curves = new List<AnimationCurve>();
         int selectedA = 0;
         int selectedB = 0;
         AnimationCurve curve = AnimationCurve.Linear(0, 0, 1, 1);
@@ -78,30 +82,65 @@ namespace WorldWizards.core.entity.gameObject
                 selectedA = selectionsA[i];
                 if (selectedA > 0 || i == selectionsA.Count-1)
                 {
-                    EditorGUILayout.LabelField("Action");
-                    selectionsA[i] = EditorGUILayout.Popup(selectedA, options);
-                    if (selectedA > 0)
+                    if (i < selectionsB.Count)
                     {
+                        selectedB = selectionsB[i];
+                    }
+                    else
+                    {
+                        selectionsB.Add(0);
+                        selectedB = 0;
+                    }
 
-                        if (i < selectionsB.Count)
+                    if (selectedB > 0)
+                    {
+                        if (i >= curves.Count)
                         {
-                            selectedB = selectionsB[i];
+                            AnimationCurve curve = AnimationCurve.Linear(0, 0, 1, 1);
+                            curves.Add(curve);
                         }
-                        else
+                        var curveX = EditorGUILayout.CurveField(options[selectedA].ToString() + " VS " + options2[selectedB].ToString(), curves[i]);
+                        if (i == selectionsA.Count - 1)
                         {
-                            selectionsB.Add(0);
-                            selectedB = 0;
+                            selectionsA.Add(0);
                         }
-                        EditorGUILayout.LabelField("Context");
-                        selectionsB[i] = EditorGUILayout.Popup(selectedB, options2);
-                        
-                        if (selectedB > 0)
+                    }
+                    else
+                    {
+                        EditorGUILayout.LabelField("Action");
+                        selectedA = EditorGUILayout.Popup(selectedA, options);
+                        selectionsA[i] = selectedA;
+
+                        if (selectedA > 0)
                         {
-                            var curveX = EditorGUILayout.CurveField(options[selectedA].ToString()+" VS "+options2[selectedB].ToString(), curve);
-                            if (i == selectionsA.Count - 1)
+
+                            options4.Clear();
+
+                            for (var j = 0; j < options2.Length; j++)
                             {
-                                selectionsA.Add(0);
+                                options3[j] = options2[j];
                             }
+                            //mark pairs
+                            for (var j = 0; j < pairs.Count; j++)
+                            {
+                                if (pairs[j][0] == selectedA)
+                                {
+                                    options3[pairs[j][1]] = "";
+                                }
+                            }
+
+                            for (var j = 0; j < options3.Length; j++)
+                            {
+                                if (options3[j] != "")
+                                {
+                                    options4.Add(options3[j]);
+                                } else {
+                                    options4.Add("");
+                                }
+                            }
+                            EditorGUILayout.LabelField("Context");
+                            selectedB = EditorGUILayout.Popup(selectedB, options4.ToArray());
+                            selectionsB[i] = selectedB;
                         }
                     }
                 } else
