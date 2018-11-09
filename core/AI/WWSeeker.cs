@@ -7,6 +7,27 @@ using Pathfinding.RVO;
 
 namespace WorldWizards.core.entity.gameObject
 {
+
+    [System.Serializable]
+    public class Curves
+    {
+        public enum Action //actions
+        {
+            Attack,
+            Flee,
+            Regroup
+        };
+        public enum Context //context
+        {
+            Health,
+            Allies,
+            Enemies
+        };
+        public Action action;
+        public Context context;
+        public AnimationCurve curve;
+    }
+
     public class WWSeeker : Seeker
     {
         int count = 0;
@@ -40,10 +61,20 @@ namespace WorldWizards.core.entity.gameObject
         [Range(1.0f, 100.0f)]
         public float deAggraDistance = 30;
 
+        float health = 100;
+
+        /*//curves
+        public List<AnimationCurve> curves = new List<AnimationCurve>() {
+            new AnimationCurve(new Keyframe(0, 0), new Keyframe(1, 1)),
+            new AnimationCurve(new Keyframe(0, 0), new Keyframe(1, 1)),
+            new AnimationCurve(new Keyframe(0, 0), new Keyframe(1, 1))
+        };*/
+
+        public Curves[] mylist = new Curves[2];
+
+
         float walkSpeed = 0;
         float acceleration = 0.08f;
-
-        float health = 100;
 
         Animator anim;
         Seeker seeker;
@@ -56,7 +87,7 @@ namespace WorldWizards.core.entity.gameObject
 
         private void Start()
         {
-           
+
             //get character components
             seeker = gameObject.GetComponent<Seeker>();
             anim = gameObject.GetComponent<Animator>();
@@ -73,7 +104,7 @@ namespace WorldWizards.core.entity.gameObject
             movementController = gameObject.AddComponent<AIPath>();
             movementController.repathRate = 0.5f;
             movementController.maxSpeed = maxWalkSpeed;
-            movementController.rotationSpeed = turnSpeed*25;
+            movementController.rotationSpeed = turnSpeed * 25;
             movementController.slowWhenNotFacingTarget = true;
 
             //find all mesh renderers
@@ -86,7 +117,6 @@ namespace WorldWizards.core.entity.gameObject
                 rend[i].materials = mats;
             }
         }
-
 
         private void Update()
         {
@@ -102,6 +132,18 @@ namespace WorldWizards.core.entity.gameObject
                     Vector3 position = raycastHit.point;
                     movementController.destination = position;
                 }*/
+
+                //update mind on delay
+                if (count > 30)
+                {
+                    count = 0;
+                    //get nearby enemies
+
+
+                    //get nearby allies
+
+                }
+                count++;
 
                 //get distance to target
                 var dist = (movementController.destination - transform.position).magnitude;
