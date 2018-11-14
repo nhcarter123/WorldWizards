@@ -35,6 +35,7 @@ namespace WorldWizards.core.experimental
 
         private bool placeState = true;
         private List<string> possibleTiles;
+        private List<string> possibleCharacters;
         private State state = State.Normal;
 
         private void Awake()
@@ -44,8 +45,8 @@ namespace WorldWizards.core.experimental
 
             foreach (string s in ResourceLoader.FindAssetBundlePaths()) Debug.Log(s);
 
-            possibleTiles = WWResourceController.GetResourceKeysByAssetBundle("characters");
-            Debug.Log(possibleTiles.Count);
+            possibleTiles = WWResourceController.GetResourceKeysByAssetBundle("ww_basic_assets", "characters");
+            Debug.LogWarning(possibleTiles.Count);
         }
 
 
@@ -250,6 +251,9 @@ namespace WorldWizards.core.experimental
 
         private WWObject PlaceObject(Vector3 position)
         {
+            //update grid
+            ManagerRegistry.Instance.GetAnInstance<WWAIManager>().RefreshGrid();
+
             List<int> possibleConfigurations =
                 BuilderAlgorithms.GetPossibleRotations(position, GetResourceTag());
 

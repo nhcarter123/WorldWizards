@@ -16,13 +16,12 @@ namespace WorldWizards.core.manager
     {
         private bool doFilter;
         private WWType filterType = WWType.None;
-        private static string assetBundleTag = "characters";
-//        private static string assetBundleTag = "arteria";
+        private static string characterBundleTag = "characters";
+        private static string assetBundleTag = "ww_basic_assets";
         
         // The list of objects for the object gun
         // Default is all the objects in ww_basic_assets
-        private List<string> possibleObjects = WWResourceController.GetResourceKeysByAssetBundle(assetBundleTag);
-
+        private List<string> possibleObjects = WWResourceController.GetResourceKeysByAssetBundle(assetBundleTag, characterBundleTag);
         /// <summary>
         ///     Gets whether the object gun should be filtered
         /// </summary>
@@ -59,11 +58,11 @@ namespace WorldWizards.core.manager
         {
             if (doFilter)
             {
-                possibleObjects = WWResourceController.GetResourceKeysByAssetBundleFiltered(assetBundleTag, filterType);
+                possibleObjects = WWResourceController.GetResourceKeysByAssetBundleFiltered(assetBundleTag, characterBundleTag, filterType);
             }
             else
             {
-                possibleObjects = WWResourceController.GetResourceKeysByAssetBundle(assetBundleTag);
+                possibleObjects = WWResourceController.GetResourceKeysByAssetBundle(assetBundleTag, characterBundleTag);
             }
 
             this.doFilter = doFilter;
@@ -76,11 +75,11 @@ namespace WorldWizards.core.manager
         {
             if (doFilter)
             {
-                possibleObjects = WWResourceController.GetResourceKeysByAssetBundleFiltered(assetBundleTag, filterType);
+                possibleObjects = WWResourceController.GetResourceKeysByAssetBundleFiltered(assetBundleTag, characterBundleTag, filterType);
             }
             else
             {
-                possibleObjects = WWResourceController.GetResourceKeysByAssetBundle(assetBundleTag);
+                possibleObjects = WWResourceController.GetResourceKeysByAssetBundle(assetBundleTag, characterBundleTag);
             }
 
             WWObjectGunManager.assetBundleTag = assetBundleTag;

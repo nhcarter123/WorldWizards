@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEngine;
 using WorldWizards.core.entity.common;
 using WorldWizards.core.entity.gameObject.resource;
@@ -14,12 +14,12 @@ namespace WorldWizards.core.controller.resources
         /// </summary>
         /// <returns>The resource keys by asset bundle.</returns>
         /// <param name="assetBundleTag">Asset bundle tag.</param>
-        public static List<string> GetResourceKeysByAssetBundle(string assetBundleTag)
+        public static List<string> GetResourceKeysByAssetBundle(string assetBundleTag, string characterBundleTag)
         {
             Debug.Log(bundles.Keys.Count);
             var filteredKeys = new List<string>();
             foreach (KeyValuePair<string, WWResource> kvp in bundles)
-                if (kvp.Value.assetBundleTag.Equals(assetBundleTag))
+                if (kvp.Value.assetBundleTag.Equals(assetBundleTag) || kvp.Value.assetBundleTag.Equals(characterBundleTag))
                 {
                     filteredKeys.Add(kvp.Key);
                 }
@@ -32,11 +32,11 @@ namespace WorldWizards.core.controller.resources
         /// <param name="assetBundleTag"></param>
         /// <param name="type"></param>
         /// <returns></returns>
-        public static List<string> GetResourceKeysByAssetBundleFiltered(string assetBundleTag, WWType type)
+        public static List<string> GetResourceKeysByAssetBundleFiltered(string assetBundleTag, string characterBundleTag, WWType type)
         {
             var filteredKeys = new List<string>();
             foreach (KeyValuePair<string, WWResource> kvp in bundles)
-                if (kvp.Value.assetBundleTag.Equals(assetBundleTag))
+                if (kvp.Value.assetBundleTag.Equals(assetBundleTag) || kvp.Value.assetBundleTag.Equals(characterBundleTag))
                 {
                     if (kvp.Value.GetMetaData().wwObjectMetadata.type.Equals(type))
                     {

@@ -1,5 +1,4 @@
 using UnityEngine;
-using Pathfinding.RVO;
 using Pathfinding;
 
 namespace WorldWizards.core.manager
@@ -20,8 +19,6 @@ namespace WorldWizards.core.manager
             GameObject obj = new GameObject("AIScript");
             obj.transform.position = new Vector3(0.0f, 0.0f, 0.0f);
             obj.AddComponent<AstarPath>();
-            obj.AddComponent<RVOSimulator>();
-            obj.AddComponent<RVOGridGraph>();
             ProceduralGridMover gridMover = obj.AddComponent<ProceduralGridMover>();
             gridMover.target = Camera.main.transform;
             gridMover.updateDistance = 15;
@@ -43,6 +40,7 @@ namespace WorldWizards.core.manager
             // Updates internal size from the above values
             LGG.SetDimensions(width, depth, nodeSize);
 
+            LGG.collision.heightMask = LayerMask.GetMask("Terrain");
             LGG.collision.mask = LayerMask.GetMask("Obstacles");
 
             //set erode iterations to givebetter edges for obstacles
@@ -54,7 +52,8 @@ namespace WorldWizards.core.manager
 
         public void RefreshGrid ()
         {
-            LGG.active.Scan();
+            //LGG.active.Scan();
+            LGG.Scan();
         }
     }
 }

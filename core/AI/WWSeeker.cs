@@ -4,30 +4,10 @@ using Pathfinding;
 using WorldWizards.core.manager;
 using System.Collections.Generic;
 using Pathfinding.RVO;
+using System.Linq;
 
 namespace WorldWizards.core.entity.gameObject
 {
-
-    [System.Serializable]
-    public class Curves
-    {
-        public enum Action //actions
-        {
-            Attack,
-            Flee,
-            Regroup
-        };
-        public enum Context //context
-        {
-            Health,
-            Allies,
-            Enemies
-        };
-        public Action action;
-        public Context context;
-        public AnimationCurve curve;
-    }
-
     public class WWSeeker : Seeker
     {
         int count = 0;
@@ -39,49 +19,40 @@ namespace WorldWizards.core.entity.gameObject
         bool fade = false;
 
         //Public Stats
-        public bool enemy = true;
+        public int team;
 
         //Turn Rate
-        [Range(1.0f, 10.0f)]
         public float turnSpeed = 5f;
 
         //Walk Speed
-        [Range(1.0f, 10.0f)]
         public float maxWalkSpeed = 4f;
 
         //Attack Distance
-        [Range(1.0f, 10.0f)]
         public float attackDistance = 1.5f;
 
         //Aggro Distance
-        [Range(1.0f, 100.0f)]
         public float aggroDistance = 18;
 
         //Attack De-Aggro Distance
-        [Range(1.0f, 100.0f)]
-        public float deAggraDistance = 30;
+        public float deAggroDistance = 30;
 
-        float health = 100;
-
-        /*//curves
-        public List<AnimationCurve> curves = new List<AnimationCurve>() {
-            new AnimationCurve(new Keyframe(0, 0), new Keyframe(1, 1)),
-            new AnimationCurve(new Keyframe(0, 0), new Keyframe(1, 1)),
-            new AnimationCurve(new Keyframe(0, 0), new Keyframe(1, 1))
-        };*/
-
-        public Curves[] mylist = new Curves[2];
-
+        //health
+        public int health = 100;
 
         float walkSpeed = 0;
-        float acceleration = 0.08f;
+        float acceleration = 0.04f;
+        float dist = 100000f;
+        int waypoint = 0;
+        Vector3 targetLocation;
 
         Animator anim;
         Seeker seeker;
+        WWSeeker target = null;
         SkinnedMeshRenderer[] rend;
-        RVOController controller;
+        CharacterController controller;
+        //RVOController controller;
         FunnelModifier modifier;
-        AIPath movementController;
+        //AIPath movementController;
 
         List<Material> transparentMaterials = new List<Material>();
 
@@ -90,22 +61,14 @@ namespace WorldWizards.core.entity.gameObject
 
             //get character components
             seeker = gameObject.GetComponent<Seeker>();
+            controller = gameObject.GetComponent<CharacterController>();
             anim = gameObject.GetComponent<Animator>();
             rend = gameObject.GetComponentsInChildren<SkinnedMeshRenderer>();
-
-            //add a local avoidance RVO controller
-            controller = GetComponent<RVOController>();
-            //controller.radius = 0.65f;
 
             //add a smoothing modifier
             modifier = gameObject.AddComponent<FunnelModifier>();
 
-            //add a movement controller
-            movementController = gameObject.AddComponent<AIPath>();
-            movementController.repathRate = 0.5f;
-            movementController.maxSpeed = maxWalkSpeed;
-            movementController.rotationSpeed = turnSpeed * 25;
-            movementController.slowWhenNotFacingTarget = true;
+            targetLocation = transform.position;
 
             //find all mesh renderers
             for (var i = 0; i < rend.Length; i++)
@@ -122,34 +85,37 @@ namespace WorldWizards.core.entity.gameObject
         {
             if (health > 0)
             {
-                health -= 0.3f;
-                //get targt location
-                movementController.destination = Camera.main.transform.position;
-                /*Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-                RaycastHit raycastHit;
-                if (Physics.Raycast(Camera.main.transform.position, Camera.main.transform.forward, out raycastHit, Mathf.Infinity))
-                {
-                    Vector3 position = raycastHit.point;
-                    movementController.destination = position;
-                }*/
 
                 //update mind on delay
+
+
                 if (count > 30)
                 {
                     count = 0;
+
                     //get nearby enemies
-
-
+                    dist = 100000f;
+                    target = null;
+                    var scripts = FindObjectsOfType<MonoBehaviour>().OfType<WWSeeker>();
+                    foreach (WWSeeker s in scripts)
+                    {
+                        if (s.team != team && s.alive)
+                        {
+                            var dist1 = (transform.position - s.transform.position).magnitude;
+                            if (dist1 < dist)
+                            {
+                                dist = dist1;
+                                target = s;
+                            }
+                        }
+                    }
+                    seeker.StartPath(transform.position, target.transform.position, OnPathComplete);
                     //get nearby allies
 
                 }
                 count++;
-
-                //get distance to target
-                var dist = (movementController.destination - transform.position).magnitude;
                 Debug.Log(dist);
 
-                //aggro or deaggro based on distance
                 if (dist < aggroDistance)
                 {
                     idle = false;
@@ -157,31 +123,55 @@ namespace WorldWizards.core.entity.gameObject
                     {
                         attacking = true;
                         anim.SetBool("Attacking", attacking);
-
                     }
                 }
-                else if (dist > deAggraDistance)
+                else if (dist > deAggroDistance)
                 {
                     idle = true;
                 }
 
                 //set animation
-                anim.SetFloat("Forward", (movementController.velocity.magnitude + 1f)/2f);
+                anim.SetFloat("Forward", controller.velocity.magnitude);
 
                 //if state is idle
                 if (idle)
                 {
-                    Deccelerate();
+                    Deccelerate(1);
+                    anim.SetFloat("Forward", 0);
                 }
                 else
                 {
+                    if (target != null)
+                    {
+                        Accelerate(1);
+
+                        if (path != null)
+                        {
+                            targetLocation = path.vectorPath[waypoint];
+                            if ((targetLocation - transform.position).magnitude < 2 && waypoint < path.vectorPath.Count)
+                            {
+                                waypoint++;
+                            }
+                        }
+                    }
+
+                    Vector3 direction = targetLocation - transform.position;
+                    transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(direction), turnSpeed * Time.deltaTime);
+                    transform.eulerAngles = new Vector3(0, transform.eulerAngles.y, 0);
+
+                    var dir = (targetLocation - transform.position).normalized;
+
+                    if (!controller.isGrounded)
+                    {
+                        dir.y -= 9.8f;
+                    }
+
+                    controller.Move(dir * walkSpeed * Time.deltaTime);  
+
+
                     if (attacking)
                     {
-                        movementController.canMove = false;
-                    }
-                    else
-                    {
-                        movementController.canMove = true;
+                        Deccelerate(2);
                     }
                 }
             }
@@ -207,14 +197,26 @@ namespace WorldWizards.core.entity.gameObject
             }
         }
 
-        private void Deccelerate()
+        private void Deccelerate(float multiplier)
         {
             if (walkSpeed > 0)
             {
-                walkSpeed -= acceleration;
+                walkSpeed -= acceleration * multiplier;
                 if (walkSpeed < 0)
                 {
                     walkSpeed = 0;
+                }
+            }
+        }
+
+        private void Accelerate(float multiplier)
+        {
+            if (walkSpeed < maxWalkSpeed)
+            {
+                walkSpeed += acceleration * multiplier;
+                if (walkSpeed > maxWalkSpeed)
+                {
+                    walkSpeed = maxWalkSpeed;
                 }
             }
         }
@@ -235,17 +237,24 @@ namespace WorldWizards.core.entity.gameObject
                 mats[1] = transparentMaterials[i];
                 rend[i].materials = mats;
             }
-            //Disable movement controller
-            movementController.canMove = false;
-            movementController.canSearch = false;
         }
 
         public void AttackEnd()
         {
+            target.health -= 20;
             attacking = false;
             anim.SetBool("Attacking", attacking);
         }
+
+        public void OnPathComplete(Path p)
+        {
+            Debug.Log("A path was calculated. Did it fail with an error? " + p.error);
+            if (!p.error)
+            {
+                path = p;
+                // Reset the waypoint counter so that we start to move towards the first point in the path
+                waypoint = 0;
+            }
+        }
     }
-
-
 }

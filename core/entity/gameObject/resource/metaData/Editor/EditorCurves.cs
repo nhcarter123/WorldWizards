@@ -7,12 +7,6 @@ namespace WorldWizards.core.entity.gameObject
     [CustomEditor(typeof(WWSeeker))]
     public class EditorCurves : Editor
     {
-        public enum Action2 //actions
-        {
-            Attack,
-            Flee,
-        };
-
         List<int[]> pairs = new List<int[]>();
 
         public string[] options = new string[] { "None", "Attack", "Flee", "Regroup" };
@@ -32,17 +26,13 @@ namespace WorldWizards.core.entity.gameObject
 
             var myScript = target as WWSeeker;
 
-            //using (new EditorGUI.DisabledScope(myScript.enemy))
-            //{
-            myScript.enemy = EditorGUILayout.Toggle("Enemy", myScript.enemy);
-            myScript.turnSpeed = EditorGUILayout.FloatField("Turn Speed", myScript.turnSpeed);
-            myScript.maxWalkSpeed = EditorGUILayout.FloatField("Walk Speed", myScript.maxWalkSpeed);
-            //}
-
-            if (myScript.enemy)
-            {
-
-            }
+            myScript.team = EditorGUILayout.IntSlider("Team", myScript.team, 0, 5);
+            myScript.health = EditorGUILayout.IntSlider("Health", myScript.health, 0, 100);
+            myScript.turnSpeed = EditorGUILayout.Slider("Turn Speed", myScript.turnSpeed, 1, 10);
+            myScript.maxWalkSpeed = EditorGUILayout.Slider("Walk Speed", myScript.maxWalkSpeed, 1, 10);
+            myScript.attackDistance = EditorGUILayout.Slider("Attack Range", myScript.attackDistance, 1, 10);
+            myScript.aggroDistance = EditorGUILayout.Slider("Aggro Range", myScript.aggroDistance, 1, 100);
+            myScript.deAggroDistance = EditorGUILayout.Slider("De-Aggro Range", myScript.deAggroDistance, 1, 100);
 
             //Debug.Log(myScript.mylist[0].action);
 
