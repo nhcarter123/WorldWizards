@@ -7,19 +7,13 @@ namespace WorldWizards.core.entity.gameObject
     [CustomEditor(typeof(WWSeeker))]
     public class EditorCurves : Editor
     {
-        List<int[]> pairs = new List<int[]>();
+        bool init = true;
 
-        public string[] options = new string[] { "None", "Attack", "Flee", "Regroup" };
-        public string[] options2 = new string[] { "None", "Health", "Allies", "Enemies" };
-        public string[] options3 = new string[] { "None", "Health", "Allies", "Enemies" };
-
+        string[] options3 = {};
         List<string> options4 = new List<string>();
-        List<int> selectionsA = new List<int>() { 0 };
-        List<int> selectionsB = new List<int>();
-        List<AnimationCurve> curves = new List<AnimationCurve>();
         int selectedA = 0;
         int selectedB = 0;
-        AnimationCurve curve = AnimationCurve.Linear(0, 0, 1, 1);
+        AnimationCurve curve = AnimationCurve.Linear(0, -1, 1, 1);
 
         override public void OnInspectorGUI()
         {
@@ -27,95 +21,103 @@ namespace WorldWizards.core.entity.gameObject
             var myScript = target as WWSeeker;
 
             myScript.team = EditorGUILayout.IntSlider("Team", myScript.team, 0, 5);
-            myScript.health = EditorGUILayout.IntSlider("Health", myScript.health, 0, 100);
+            myScript.max_health = EditorGUILayout.IntSlider("Max Health", myScript.max_health, 0, 100);
+            myScript.health = EditorGUILayout.IntSlider("Health", myScript.health, 0, myScript.max_health);
             myScript.turnSpeed = EditorGUILayout.Slider("Turn Speed", myScript.turnSpeed, 1, 10);
             myScript.maxWalkSpeed = EditorGUILayout.Slider("Walk Speed", myScript.maxWalkSpeed, 1, 10);
             myScript.attackDistance = EditorGUILayout.Slider("Attack Range", myScript.attackDistance, 1, 10);
             myScript.aggroDistance = EditorGUILayout.Slider("Aggro Range", myScript.aggroDistance, 1, 100);
             myScript.deAggroDistance = EditorGUILayout.Slider("De-Aggro Range", myScript.deAggroDistance, 1, 100);
 
+            if (init)
+            {
+                init = false;
+                options3 = System.Enum.GetNames(typeof(contexts_enum));
+            }
+            
             //Debug.Log(myScript.mylist[0].action);
 
-            for (var i = 0; i < selectionsA.Count; i++)
+            for (var i = 0; i < myScript.selectionsA.Count; i++)
             {
-                if (i < selectionsB.Count && selectionsA[i] > 0 && selectionsB[i] > 0)
+                if (i < myScript.selectionsB.Count && myScript.selectionsA[i] > 0 && myScript.selectionsB[i] > 0)
                 {
-                    if (i == pairs.Count)
+                    if (i == myScript.pairs.Count)
                     {
-                        int[] pair = { selectionsA[i], selectionsB[i] };
-                        pairs.Add(pair);
+                        int[] pair = { myScript.selectionsA[i], myScript.selectionsB[i] };
+                        myScript.pairs.Add(pair);
                     }
                     else
                     {
-                        var pair = pairs[i];
-                        pair[0] = selectionsA[i];
-                        pair[1] = selectionsB[i];
-                        pairs[i] = pair;
+                        var pair = myScript.pairs[i];
+                        pair[0] = myScript.selectionsA[i];
+                        pair[1] = myScript.selectionsB[i];
+                        myScript.pairs[i] = pair;
                     }
                 }
             }
-            for (var i = 0; i < pairs.Count; i++)
+            for (var i = 0; i < myScript.pairs.Count; i++)
             {
-                Debug.Log("[" + pairs[i][0].ToString() + ", " + pairs[i][1].ToString() + "]");
+                Debug.Log("[" + myScript.pairs[i][0].ToString() + ", " + myScript.pairs[i][1].ToString() + "]");
             }
 
             EditorGUI.indentLevel++;
             ///
 
-            for (var i = 0; i < selectionsA.Count; i++)
+            for (var i = 0; i < myScript.selectionsA.Count; i++)
             {
                 //horiz line
                 Rect rect = EditorGUILayout.GetControlRect(false, 1);
                 rect.height = 1;
                 EditorGUI.DrawRect(rect, new Color(0.5f, 0.5f, 0.5f, 1));
 
-                selectedA = selectionsA[i];
-                if (selectedA > 0 || i == selectionsA.Count-1)
+                selectedA = myScript.selectionsA[i];
+                if (selectedA > 0 || i == myScript.selectionsA.Count-1)
                 {
-                    if (i < selectionsB.Count)
+                    if (i < myScript.selectionsB.Count)
                     {
-                        selectedB = selectionsB[i];
+                        selectedB = myScript.selectionsB[i];
                     }
                     else
                     {
-                        selectionsB.Add(0);
+                        myScript.selectionsB.Add(0);
                         selectedB = 0;
                     }
 
                     if (selectedB > 0)
                     {
-                        if (i >= curves.Count)
+                        if (i >= myScript.curves.Count)
                         {
                             AnimationCurve curve = AnimationCurve.Linear(0, 0, 1, 1);
-                            curves.Add(curve);
+                            myScript.curves.Add(curve);
+                            myScript.UpdateActiveActionsContexts();
                         }
-                        var curveX = EditorGUILayout.CurveField(options[selectedA].ToString() + " VS " + options2[selectedB].ToString(), curves[i]);
-                        if (i == selectionsA.Count - 1)
+                        var curveX = EditorGUILayout.CurveField(myScript.actions[selectedA].ToString() + " VS " + myScript.contexts[selectedB].ToString(), myScript.curves[i]);
+                        if (i == myScript.selectionsA.Count - 1)
                         {
-                            selectionsA.Add(0);
+                            myScript.selectionsA.Add(0);
                         }
                     }
                     else
                     {
                         EditorGUILayout.LabelField("Action");
-                        selectedA = EditorGUILayout.Popup(selectedA, options);
-                        selectionsA[i] = selectedA;
+                        selectedA = EditorGUILayout.Popup(selectedA, myScript.actions);
+                        myScript.selectionsA[i] = selectedA;
 
                         if (selectedA > 0)
                         {
 
                             options4.Clear();
 
-                            for (var j = 0; j < options2.Length; j++)
+                            for (var j = 0; j < myScript.contexts.Length; j++)
                             {
-                                options3[j] = options2[j];
+                                options3[j] = myScript.contexts[j];
                             }
                             //mark pairs
-                            for (var j = 0; j < pairs.Count; j++)
+                            for (var j = 0; j < myScript.pairs.Count; j++)
                             {
-                                if (pairs[j][0] == selectedA)
+                                if (myScript.pairs[j][0] == selectedA)
                                 {
-                                    options3[pairs[j][1]] = "";
+                                    options3[myScript.pairs[j][1]] = "";
                                 }
                             }
 
@@ -130,42 +132,18 @@ namespace WorldWizards.core.entity.gameObject
                             }
                             EditorGUILayout.LabelField("Context");
                             selectedB = EditorGUILayout.Popup(selectedB, options4.ToArray());
-                            selectionsB[i] = selectedB;
+                            myScript.selectionsB[i] = selectedB;
                         }
                     }
                 } else
                 {
-                    selectionsA.RemoveAt(i);
-                    selectionsB.RemoveAt(i);
+                    myScript.selectionsA.RemoveAt(i);
+                    myScript.selectionsB.RemoveAt(i);
                     i--;
                 }
             }
             ///
             EditorGUI.indentLevel--;
-
-            //EditorGUILayout.LabelField("Curve Editor");
-            //var serializedObject = new SerializedObject(myScript);
-            //var property = serializedObject.FindProperty("mylist");
-
-            //property.GetArrayElementAtIndex(0).FindPropertyRelative("action").;
-            //property.GetArrayElementAtIndex(0).FindPropertyRelative("action").intValue = 1;
-
-            //serializedObject.ApplyModifiedProperties();
-            //property.GetArrayElementAtIndex(0).GetArrayElementAtIndex(0));
-            //Debug.Log(property.GetArrayElementAtIndex(0).FindPropertyRelative("action").intValue);
-
-
-            //serializedObject.Update();
-            //EditorGUILayout.PropertyField(property, true);
-            //serializedObject.ApplyModifiedProperties();
-            //myScript.mylist = EditorGUILayout.Ar("Enemy", myScript.mylist);
-
-            //myScript.mylist[0].action = (Curves.Action) Action2.Attack;
-            //myScript.mylist = GUILayout.Toggle(myScript.mylist, "Flag");
-
-            //if (myScript.flag)
-            //    myScript.i = EditorGUILayout.IntSlider("I field:", myScript.i, 1, 100);
-
         }
     }
 }

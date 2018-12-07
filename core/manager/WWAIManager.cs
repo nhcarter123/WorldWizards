@@ -1,5 +1,6 @@
 using UnityEngine;
 using Pathfinding;
+using Pathfinding.RVO;
 
 namespace WorldWizards.core.manager
 {
@@ -19,9 +20,12 @@ namespace WorldWizards.core.manager
             GameObject obj = new GameObject("AIScript");
             obj.transform.position = new Vector3(0.0f, 0.0f, 0.0f);
             obj.AddComponent<AstarPath>();
+            
+            //RVOSimulator rsim = obj.AddComponent<RVOSimulator>();
+
             ProceduralGridMover gridMover = obj.AddComponent<ProceduralGridMover>();
             gridMover.target = Camera.main.transform;
-            gridMover.updateDistance = 15;
+            gridMover.updateDistance = 5;
             gridMover.floodFill = true;
 
             // This holds all graph data
@@ -31,9 +35,15 @@ namespace WorldWizards.core.manager
             LGG = data.AddGraph(typeof(LayerGridGraph)) as LayerGridGraph;
 
             // Setup a grid graph with some values
-            int width = 70;
-            int depth = 70;
-            float nodeSize = 0.35f;
+            int width = 80;
+            int depth = 80;
+            float nodeSize = 0.5f;
+            LGG.characterHeight = 2;
+            LGG.maxClimb = 1.5f;
+
+            LGG.collision.collisionOffset = 1;
+            LGG.collision.diameter = 4;
+            LGG.collision.type = 0;
 
             LGG.center = new Vector3(0,0,0);
 
@@ -46,13 +56,12 @@ namespace WorldWizards.core.manager
             //set erode iterations to givebetter edges for obstacles
             LGG.erodeIterations = 0;
 
-            // Scans all graphs
-            LGG.active.Scan();
+            // Scans graph
+            LGG.Scan();
         }
 
         public void RefreshGrid ()
         {
-            //LGG.active.Scan();
             LGG.Scan();
         }
     }

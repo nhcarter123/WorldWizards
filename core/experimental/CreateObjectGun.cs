@@ -251,8 +251,6 @@ namespace WorldWizards.core.experimental
 
         private WWObject PlaceObject(Vector3 position)
         {
-            //update grid
-            ManagerRegistry.Instance.GetAnInstance<WWAIManager>().RefreshGrid();
 
             List<int> possibleConfigurations =
                 BuilderAlgorithms.GetPossibleRotations(position, GetResourceTag());

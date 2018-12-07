@@ -76,7 +76,7 @@ namespace WorldWizards.core.entity.gameObject.utils
             if (gameObject.name == "Skeleton(Clone)" || gameObject.name == "Zombie(Clone)")
             {
 
-            } else if (gameObject.name == "Tile_FloorBrick(Clone)")
+            } else if (gameObject.name == "Tile_FloorBrick(Clone)" || gameObject.name == "Tile_Staircase(Clone)")
             {
                 //terrain
                 gameObject.layer = 9;

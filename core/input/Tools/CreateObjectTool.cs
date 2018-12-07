@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using WorldWizards.core.controller.builder;
@@ -106,6 +106,18 @@ namespace WorldWizards.core.input.Tools
                 if (!ManagerRegistry.Instance.GetAnInstance<SceneGraphManager>().Add(curObject))
                 {
                     Destroy(curObject.gameObject); // If the object collided with another, destroy it.
+                } else
+                {
+                    if (curObject.gameObject.layer == 8 || curObject.gameObject.layer == 9)
+                    {
+                        ManagerRegistry.Instance.GetAnInstance<WWAIManager>().RefreshGrid();
+
+                    }
+                    else
+                    {
+                        WWSeeker script = curObject.GetComponent<WWSeeker>();
+                        script.Place();
+                    }
                 }
                 curObject = null;
             }
@@ -141,6 +153,16 @@ namespace WorldWizards.core.input.Tools
                     WWObject wwObject = raycastHit.transform.gameObject.GetComponent<WWObject>();
                     if (wwObject != null)
                     {
+                        if (wwObject.gameObject.layer == 8 || wwObject.gameObject.layer == 9)
+                        {
+                            ManagerRegistry.Instance.GetAnInstance<WWAIManager>().RefreshGrid();
+
+                        }
+                        else
+                        {
+                            WWSeeker script = wwObject.GetComponent<WWSeeker>();
+                            script.Place();
+                        }
                         ManagerRegistry.Instance.GetAnInstance<SceneGraphManager>().Delete(wwObject.GetId());
                     }
                 }
