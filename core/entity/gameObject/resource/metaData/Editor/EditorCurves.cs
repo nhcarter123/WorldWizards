@@ -13,7 +13,7 @@ namespace WorldWizards.core.entity.gameObject
         List<string> options4 = new List<string>();
         int selectedA = 0;
         int selectedB = 0;
-        AnimationCurve curve = AnimationCurve.Linear(0, -1, 1, 1);
+        AnimationCurve curve = AnimationCurve.Linear(0, 0, 1, 1);
 
         override public void OnInspectorGUI()
         {

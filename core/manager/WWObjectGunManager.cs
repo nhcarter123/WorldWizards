@@ -17,7 +17,7 @@ namespace WorldWizards.core.manager
         private bool doFilter;
         private WWType filterType = WWType.None;
         private static string characterBundleTag = "characters";
-        private static string assetBundleTag = "ww_basic_assets";
+        private static string assetBundleTag = "medeivalvillage";
         
         // The list of objects for the object gun
         // Default is all the objects in ww_basic_assets

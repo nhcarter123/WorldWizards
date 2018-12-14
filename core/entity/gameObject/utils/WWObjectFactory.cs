@@ -72,7 +72,7 @@ namespace WorldWizards.core.entity.gameObject.utils
         {
             // Make the GameObject into a Tile, Prop, etc.
             Type type = WWTypeHelper.ConvertToSysType(metadata.wwObjectMetadata.type);
-            Debug.Log(gameObject.name);
+            /*Debug.Log(gameObject.name);
             if (gameObject.name == "Skeleton(Clone)" || gameObject.name == "Zombie(Clone)")
             {
 
@@ -83,7 +83,7 @@ namespace WorldWizards.core.entity.gameObject.utils
             } else {
                 //obstacle
                 gameObject.layer = 8;
-            }
+            }*/
             var wwObject = gameObject.AddComponent(type) as WWObject;
             // Scale the object to the current tile scale.
             wwObject.transform.localScale = Vector3.one * CoordinateHelper.tileLengthScale * gameObject.transform.localScale.x;// * metadata.wwObjectMetadata.baseTileSize;

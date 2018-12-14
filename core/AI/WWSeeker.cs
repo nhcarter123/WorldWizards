@@ -50,15 +50,20 @@ namespace WorldWizards.core.entity.gameObject
         public int max_health = 100;
         public int health = 100;
 
+        //damage
+        public int damage = 5;
+
         float vision = 100;
         float walkSpeed = 0;
         float acceleration = 0.03f;
-        float dist = 100000f;
+        float dist = 0;
+        WWSeeker closest_enemy;
         int waypoint = 0;
         int waiting = 0;
         Vector3 targetLocation;
         Ray sight;
         bool placed = false;
+        IEnumerable<WWSeeker> scripts;
 
         Animator anim;
         Seeker seeker;
@@ -80,15 +85,6 @@ namespace WorldWizards.core.entity.gameObject
 
         List<float> action_ratings = new List<float>();
         List<float> context_ratings = new List<float>();
-
-        //environmental rating from 0.0-1.0
-        float nearby_enemies_rating;
-        float nearby_allies_rating;
-        float health_rating;
-
-        float attack_rating;
-        float flee_rating;
-        float regroup_rating;
 
         public List<int> selectionsA = new List<int>() { 0 };
         public List<int> selectionsB = new List<int>();
@@ -151,38 +147,19 @@ namespace WorldWizards.core.entity.gameObject
                 if (count > 30)
                 {
                     count = 0;
-
-                    //get nearby enemies
-                    dist = 100000f;
-                    target = null;
-                    var scripts = FindObjectsOfType<MonoBehaviour>().OfType<WWSeeker>();
-                    foreach (WWSeeker s in scripts)
-                    {
-                        if (s.team != team && s.alive)
-                        {
-                            var dist1 = (transform.position - s.transform.position).magnitude;
-                            if (dist1 < dist)
-                            {
-                                dist = dist1;
-                                target = s;
-                                movementController.destination = target.transform.position;
-                            }
-                        }
-                    }
                     if (target == null)
                     {
                         waiting++;
                         if (waiting > 10)
                         {
                             waiting = 0;
-                            movementController.destination = transform.position + new Vector3(Random.Range(-4,4),0,Random.Range(-4,4));
+                            movementController.destination = transform.position + new Vector3(Random.Range(-4, 4), 0, Random.Range(-4, 4));
                             idle = false;
                         }
                     }
                     //get nearby allies
 
                     //iterate through curves
-
                     for (var i = 0; i < active_actions.Count; i++)
                     {
                         action_ratings[active_actions[i]] = 0;
@@ -195,7 +172,7 @@ namespace WorldWizards.core.entity.gameObject
 
                     for (var i = 0; i < curves.Count; i++)
                     {
-                        action_ratings[selectionsA[i]] += curves[i].Evaluate(context_ratings[selectionsB[i]]) + 1001;
+                        action_ratings[selectionsA[i]] += curves[i].Evaluate(context_ratings[selectionsB[i]]) + 1000;
                     }
 
                     //average ratings with additive 0.1 * n
@@ -205,12 +182,25 @@ namespace WorldWizards.core.entity.gameObject
                         float n = Mathf.Round(rating / 1000);
                         if (n > 0)
                         {
-                            rating = (rating - (1001 * n)) / n;
-                            action_ratings[i] = rating + (rating * 0.1f * (n-1));
+                            rating = (rating - (1000 * n)) / n;
+                            action_ratings[i] = rating + (rating * 0.1f * (n - 1));
                         }
-                        //Debug.Log(action_ratings[i]);
-                    }             
+                        Debug.Log(action_ratings[i]);
+                    }
 
+                    //find highest rating
+                    float highest = 0;
+                    int chosen_action = -1;
+                    for (var i = 0; i < action_ratings.Count; i++)
+                    {
+                        if (action_ratings[i] > highest)
+                        {
+                            highest = action_ratings[i];
+                            chosen_action = i;
+                        }
+                    }
+
+                    ExecuteAction(chosen_action);
                 }
                 count++;
 
@@ -259,7 +249,7 @@ namespace WorldWizards.core.entity.gameObject
                     {
                         if (path != null)
                         {
-                            if (waypoint < path.vectorPath.Count-1)
+                            if (waypoint < path.vectorPath.Count - 1)
                             {
                                 targetLocation = path.vectorPath[waypoint];
                                 if ((targetLocation - transform.position).magnitude < 0.1f)
@@ -277,7 +267,7 @@ namespace WorldWizards.core.entity.gameObject
 
                     if (dist < 1)
                     {
-                        Deccelerate(1);
+                        Deccelerate(4);
                     } else
                     {
                         Accelerate(1);
@@ -302,10 +292,10 @@ namespace WorldWizards.core.entity.gameObject
                         var direction = target.transform.position - transform.position;
                         direction.y = 0;
                         transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(direction), turnSpeed * Time.deltaTime);
-                        Deccelerate(1);
+                        Deccelerate(4);
                     }
-                   
-                    
+
+
 
                     //Deccelerate(2);
                     //}
@@ -380,14 +370,14 @@ namespace WorldWizards.core.entity.gameObject
 
         public void AttackEnd()
         {
-            target.health -= 20;
+            target.health -= damage;
             attacking = false;
             anim.SetBool("Attacking", attacking);
         }
 
-        private float CalculateRating (int rating_type)
+        private float CalculateRating(int rating_type)
         {
-            float score = -1;
+            float score = 0;
             switch (rating_type)
             {
                 //Calculate health score
@@ -396,15 +386,59 @@ namespace WorldWizards.core.entity.gameObject
                     break;
                 //Nearby Allies
                 case 2:
-                    score = 0.5f;
-
+                    score = CheckAllies();
                     break;
                 //Nearby Enemies
                 case 3:
-                    score = 1;
+                    score = CheckEnemies();
                     break;
             }
             return score;
+        }
+
+        private void ExecuteAction (int action) {
+            int total = 0;
+            Vector3 pos = new Vector3(0, 0, 0);
+
+            switch (action)
+            {
+                case 1:
+                    //attack
+                    target = closest_enemy;
+                    if (closest_enemy != null)
+                    {
+                        movementController.destination = target.transform.position;
+                    }
+                    break;
+                case 2:
+                    //flee
+                    scripts = FindObjectsOfType<MonoBehaviour>().OfType<WWSeeker>();
+                    
+                    foreach (WWSeeker s in scripts)
+                    {  
+                        if (s.team != team && s.alive)
+                        {
+                            total++;
+                            pos += s.transform.position;
+                        }
+                    }
+                    movementController.destination = - pos / total;
+
+                    break;
+                case 3:
+                    //regroup
+                    scripts = FindObjectsOfType<MonoBehaviour>().OfType<WWSeeker>();
+                    foreach (WWSeeker s in scripts)
+                    {
+                        if (s.team == team && s.alive)
+                        {
+                            total++;
+                            pos += s.transform.position;
+                        }
+                    }
+                    movementController.destination = pos / total;
+                    break;
+            }
         }
 
         public void UpdateActiveActionsContexts()
@@ -457,6 +491,51 @@ namespace WorldWizards.core.entity.gameObject
             }
         }
         
+        public float CheckEnemies()
+        {
+            dist = Mathf.Infinity;
+            target = null;
+            float rating = 0;
+            var scripts = FindObjectsOfType<MonoBehaviour>().OfType<WWSeeker>();
+            foreach (WWSeeker s in scripts)
+            {
+                if (s.team != team && s.alive)
+                {
+
+                    var dist1 = (transform.position - s.transform.position).magnitude;
+
+                    //formula 0.1/x+0.1 (0-1)
+                    rating += Mathf.Clamp(0.1f/dist1+0.1f,0,1);
+
+                    //get closest enemy
+                    if (dist1 < dist)
+                    {
+                        dist = dist1;
+                        closest_enemy = s;
+                    }
+                }
+            }
+            return Mathf.Clamp(rating, 0, 1);
+        }
+
+        public float CheckAllies()
+        {
+            target = null;
+            float rating = 0;
+            var scripts = FindObjectsOfType<MonoBehaviour>().OfType<WWSeeker>();
+            foreach (WWSeeker s in scripts)
+            {
+                if (s.team == team && s.alive)
+                {
+
+                    var dist1 = (transform.position - s.transform.position).magnitude;
+
+                    //formula 0.1/x+0.1 (0-1)
+                    rating += Mathf.Clamp(0.1f / dist1 + 0.1f, 0, 1);
+                }
+            }
+            return Mathf.Clamp(rating, 0, 1);
+        }
 
         /*public void OnPathComplete(Path p)
         {
