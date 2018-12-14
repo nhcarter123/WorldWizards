@@ -23,7 +23,6 @@ namespace WorldWizards.core.entity.gameObject
         int count = 0;
 
         //States
-        bool idle = true;
         bool attacking = false;
         bool alive = true;
         bool fade = false;
@@ -57,6 +56,7 @@ namespace WorldWizards.core.entity.gameObject
         float walkSpeed = 0;
         float acceleration = 0.03f;
         float dist = 0;
+        string state = "idle";
         WWSeeker closest_enemy;
         int waypoint = 0;
         int waiting = 0;
@@ -121,6 +121,7 @@ namespace WorldWizards.core.entity.gameObject
             movementController.endReachedDistance = 1f;
             movementController.slowWhenNotFacingTarget = true;
             movementController.repathRate = 1;
+            movementController.gravity = new Vector3(0,0,0);
 
             //add a smoothing modifier
             modifier = gameObject.AddComponent<FunnelModifier>();
@@ -143,21 +144,11 @@ namespace WorldWizards.core.entity.gameObject
             if (health > 0)
             {
 
+                ///////////////////////////////////////////////////// BRAIN ///////////////////////////////////////////////////////////////
                 //update mind on delay
                 if (count > 30)
                 {
                     count = 0;
-                    if (target == null)
-                    {
-                        waiting++;
-                        if (waiting > 10)
-                        {
-                            waiting = 0;
-                            movementController.destination = transform.position + new Vector3(Random.Range(-4, 4), 0, Random.Range(-4, 4));
-                            idle = false;
-                        }
-                    }
-                    //get nearby allies
 
                     //iterate through curves
                     for (var i = 0; i < active_actions.Count; i++)
@@ -185,7 +176,7 @@ namespace WorldWizards.core.entity.gameObject
                             rating = (rating - (1000 * n)) / n;
                             action_ratings[i] = rating + (rating * 0.1f * (n - 1));
                         }
-                        Debug.Log(action_ratings[i]);
+                        //Debug.Log(action_ratings[i]);
                     }
 
                     //find highest rating
@@ -199,109 +190,92 @@ namespace WorldWizards.core.entity.gameObject
                             chosen_action = i;
                         }
                     }
+                    if (highest < 0.2)
+                    {
+                        chosen_action = 0;
+                    }
 
                     ExecuteAction(chosen_action);
                 }
                 count++;
-
-                idle = false;
-                movementController.canSearch = true;
-                attacking = false;
-                anim.SetBool("Attacking", attacking);
-
-                if (target != null)
-                {
-                    if (dist < aggroDistance)
-                    {
-                        if (dist < attackDistance)
-                        {
-                            idle = true;
-                            if (target != null && target.health > 0 && CanSeeTarget())
-                            {
-                                idle = false;
-                                attacking = true;
-                                anim.SetBool("Attacking", attacking);
-                                movementController.canSearch = false;
-                            }
-                        }
-                    }
-                    else if (dist > deAggroDistance)
-                    {
-                        idle = true;
-                        movementController.canSearch = false;
-                    }
-                }
+                ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
                 //set animation
-
                 var xyVel = new Vector3(movementController.velocity.x, 0, controller.velocity.z);
                 anim.SetFloat("Forward", xyVel.magnitude);
                 movementController.maxSpeed = walkSpeed;
+                attacking = false;
+                anim.SetBool("Attacking", false);
+                transform.position += new Vector3(0, -0.1f, 0);
+
+                if (state == "attack")
+                {
+
+                    //If we have a target check if they are in range
+                    if (target != null)
+                    {
+                        if (dist < aggroDistance)
+                        {
+                            if (dist < attackDistance)
+                            {
+                                if (target.health > 0 && CanSeeTarget())
+                                {
+                                    attacking = true;
+                                    anim.SetBool("Attacking", true);
+                                    movementController.canSearch = false;
+                                }
+                            }
+                        }
+                        else if (dist > deAggroDistance)
+                        {
+                            state = "walk";
+                            movementController.canSearch = false;
+                        }
+                    } else
+                    {
+                        state = "walk";
+                    }
+                }
+
+                if (state == "walk")
+                {
+                    if ((transform.position - movementController.destination).magnitude < 1)
+                    {
+                        state = "idle";
+                    }
+                    waiting++;
+                    if (waiting > 240)
+                    {
+                        waiting = 0;
+                        movementController.destination = transform.position + new Vector3(Random.Range(-4, 4), 0, Random.Range(-4, 4));
+                        movementController.canSearch = true;
+                    }
+                }
 
                 //if state is idle
-                if (idle)
+                if (state == "idle")
                 {
+                    movementController.canSearch = false;
                     Deccelerate(2);
+                    waiting++;
+                    if (waiting > 240)
+                    {
+                        state = "walk";
+                    }
                 }
                 else
                 {
-                    if (target != null)
-                    {
-                        if (path != null)
-                        {
-                            if (waypoint < path.vectorPath.Count - 1)
-                            {
-                                targetLocation = path.vectorPath[waypoint];
-                                if ((targetLocation - transform.position).magnitude < 0.1f)
-                                {
-                                    waypoint++;
-                                }
-                                /*if ((transform.position - path.vectorPath[waypoint]).sqrMagnitude < 1 * 1)
-                                {
-                                    targetLocation = path.vectorPath[waypoint];
-                                    waypoint++;
-                                }*/
-                            }
-                        }
-                    }
-
-                    if (dist < 1)
-                    {
-                        Deccelerate(4);
-                    } else
-                    {
-                        Accelerate(1);
-                    }
-
-                    //var dir = (targetLocation - transform.position).normalized;
-
-                    /*if (!controller.isGrounded)
-                    {
-                        dir.y -= 9.8f;
-                    }*/
-
-                    //controller.Move(dir * walkSpeed * Time.deltaTime);
-                    //controller.SetTarget(targetLocation, walkSpeed, maxWalkSpeed);
-                    //var delta = controller.CalculateMovementDelta(transform.position, Time.deltaTime);
-
-                    //transform.position = transform.position + delta;
-
-
                     if (attacking)
                     {
+                        //stop and turn towards target
                         var direction = target.transform.position - transform.position;
                         direction.y = 0;
                         transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(direction), turnSpeed * Time.deltaTime);
                         Deccelerate(4);
+                    } else
+                    {
+                        Accelerate(2);
                     }
-
-
-
-                    //Deccelerate(2);
-                    //}
-                    //{
-                    //   movementController.attacking = false;
-                    //}
                 }
             }
             else if (alive)
@@ -399,19 +373,28 @@ namespace WorldWizards.core.entity.gameObject
         private void ExecuteAction (int action) {
             int total = 0;
             Vector3 pos = new Vector3(0, 0, 0);
-
+            target = null;
             switch (action)
             {
+                case 0:
+                    //idle
+                    state = "idle";
+                    break;
                 case 1:
                     //attack
+                    Debug.Log("Attack");
                     target = closest_enemy;
+                    state = "attack";
                     if (closest_enemy != null)
                     {
                         movementController.destination = target.transform.position;
+                        movementController.canSearch = true;
                     }
                     break;
                 case 2:
                     //flee
+                    Debug.Log("Flee");
+                    state = "flee";
                     scripts = FindObjectsOfType<MonoBehaviour>().OfType<WWSeeker>();
                     
                     foreach (WWSeeker s in scripts)
@@ -423,10 +406,13 @@ namespace WorldWizards.core.entity.gameObject
                         }
                     }
                     movementController.destination = - pos / total;
+                    movementController.canSearch = true;
 
                     break;
                 case 3:
                     //regroup
+                    Debug.Log("Regroup");
+                    state = "regroup";
                     scripts = FindObjectsOfType<MonoBehaviour>().OfType<WWSeeker>();
                     foreach (WWSeeker s in scripts)
                     {
@@ -437,6 +423,7 @@ namespace WorldWizards.core.entity.gameObject
                         }
                     }
                     movementController.destination = pos / total;
+                    movementController.canSearch = true;
                     break;
             }
         }

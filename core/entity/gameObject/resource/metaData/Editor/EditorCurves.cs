@@ -9,8 +9,8 @@ namespace WorldWizards.core.entity.gameObject
     {
         bool init = true;
 
-        string[] options3 = {};
-        List<string> options4 = new List<string>();
+        List<string> options3 = new List<string>();
+        List<int> options4 = new List<int>();
         int selectedA = 0;
         int selectedB = 0;
         AnimationCurve curve = AnimationCurve.Linear(0, 0, 1, 1);
@@ -32,10 +32,11 @@ namespace WorldWizards.core.entity.gameObject
             if (init)
             {
                 init = false;
-                options3 = System.Enum.GetNames(typeof(contexts_enum));
+                options3.AddRange(System.Enum.GetNames(typeof(contexts_enum)));
             }
-            
+
             //Debug.Log(myScript.mylist[0].action);
+            myScript.pairs.Clear();
 
             for (var i = 0; i < myScript.selectionsA.Count; i++)
             {
@@ -92,6 +93,11 @@ namespace WorldWizards.core.entity.gameObject
                             myScript.UpdateActiveActionsContexts();
                         }
                         var curveX = EditorGUILayout.CurveField(myScript.actions[selectedA].ToString() + " VS " + myScript.contexts[selectedB].ToString(), myScript.curves[i]);
+                        if (GUILayout.Button("Delete")) {
+                            myScript.selectionsA.RemoveAt(i);
+                            myScript.selectionsB.RemoveAt(i);
+                            i--;
+                        }
                         if (i == myScript.selectionsA.Count - 1)
                         {
                             myScript.selectionsA.Add(0);
@@ -106,14 +112,28 @@ namespace WorldWizards.core.entity.gameObject
                         if (selectedA > 0)
                         {
 
-                            options4.Clear();
-
-                            for (var j = 0; j < myScript.contexts.Length; j++)
+                            //setup lists
+                            var j = 0;
+                            for (j = 0; j < myScript.contexts.Length; j++)
                             {
-                                options3[j] = myScript.contexts[j];
+                                if (options3.Count > j)
+                                {
+                                    options3[j] = myScript.contexts[j];
+                                } else
+                                {
+                                    options3.Add(myScript.contexts[j]);
+                                }
+                                if (options4.Count > j)
+                                {
+                                    options4[j] = j;
+                                } else
+                                {
+                                    options4.Add(j);
+                                }
                             }
+
                             //mark pairs
-                            for (var j = 0; j < myScript.pairs.Count; j++)
+                            for (j = 0; j < myScript.pairs.Count; j++)
                             {
                                 if (myScript.pairs[j][0] == selectedA)
                                 {
@@ -121,17 +141,20 @@ namespace WorldWizards.core.entity.gameObject
                                 }
                             }
 
-                            for (var j = 0; j < options3.Length; j++)
-                            {
-                                if (options3[j] != "")
+                            //remove pairs
+                            j = 0;
+                            while (j < options3.Count) {
+                                if (options3[j] == "")
                                 {
-                                    options4.Add(options3[j]);
-                                } else {
-                                    options4.Add("");
+                                    options3.RemoveAt(j);
+                                    options4.RemoveAt(j);
+                                    j--;
                                 }
+                                j++;
                             }
                             EditorGUILayout.LabelField("Context");
-                            selectedB = EditorGUILayout.Popup(selectedB, options4.ToArray());
+                            selectedB = EditorGUILayout.Popup(selectedB, options3.ToArray());
+                            selectedB = options4[selectedB];
                             myScript.selectionsB[i] = selectedB;
                         }
                     }
