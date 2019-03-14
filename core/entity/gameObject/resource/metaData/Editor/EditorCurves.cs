@@ -96,6 +96,7 @@ namespace WorldWizards.core.entity.gameObject
                         if (GUILayout.Button("Delete")) {
                             myScript.selectionsA.RemoveAt(i);
                             myScript.selectionsB.RemoveAt(i);
+                            myScript.curves.RemoveAt(i);
                             i--;
                         }
                         if (i == myScript.selectionsA.Count - 1)

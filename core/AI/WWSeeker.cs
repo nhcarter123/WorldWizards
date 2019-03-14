@@ -121,7 +121,7 @@ namespace WorldWizards.core.entity.gameObject
             movementController.endReachedDistance = 1f;
             movementController.slowWhenNotFacingTarget = true;
             movementController.repathRate = 1;
-            movementController.gravity = new Vector3(0,0,0);
+            //movementController.gravity = new Vector3(0,0,0);
 
             //add a smoothing modifier
             modifier = gameObject.AddComponent<FunnelModifier>();
@@ -151,9 +151,13 @@ namespace WorldWizards.core.entity.gameObject
                     count = 0;
 
                     //iterate through curves
-                    for (var i = 0; i < active_actions.Count; i++)
+                    //for (var i = 0; i < active_actions.Count; i++)
+                    //{
+                    //    action_ratings[active_actions[i]] = 0;
+                    //}
+                    for (var i = 0; i < curves.Count; i++)
                     {
-                        action_ratings[active_actions[i]] = 0;
+                        action_ratings[selectionsA[i]] = 0;
                     }
 
                     for (var i = 0; i < active_contexts.Count; i++)
