@@ -42,7 +42,7 @@ namespace WorldWizards.core.manager
             LGG.maxClimb = 1.5f;
 
             LGG.collision.collisionOffset = 1;
-            LGG.collision.diameter = 4;
+            LGG.collision.diameter = 2.5f;
             LGG.collision.type = 0;
 
             LGG.center = new Vector3(0,0,0);

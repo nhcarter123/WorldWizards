@@ -113,7 +113,7 @@ namespace WorldWizards.core.input.Tools
                         ManagerRegistry.Instance.GetAnInstance<WWAIManager>().RefreshGrid();
 
                     }
-                    else
+                    else if (curObject.gameObject.layer == 10)
                     {
                         WWSeeker script = curObject.GetComponent<WWSeeker>();
                         script.Place();
@@ -156,13 +156,8 @@ namespace WorldWizards.core.input.Tools
                         if (wwObject.gameObject.layer == 8 || wwObject.gameObject.layer == 9)
                         {
                             ManagerRegistry.Instance.GetAnInstance<WWAIManager>().RefreshGrid();
+                        }
 
-                        }
-                        else
-                        {
-                            WWSeeker script = wwObject.GetComponent<WWSeeker>();
-                            script.Place();
-                        }
                         ManagerRegistry.Instance.GetAnInstance<SceneGraphManager>().Delete(wwObject.GetId());
                     }
                 }

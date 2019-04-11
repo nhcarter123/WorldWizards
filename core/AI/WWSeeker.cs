@@ -209,8 +209,8 @@ namespace WorldWizards.core.entity.gameObject
                 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
                 //set animation
-                var xyVel = new Vector3(Mathf.Abs(controller.velocity.x), Mathf.Abs(controller.velocity.y / 2), Mathf.Abs(controller.velocity.z));
-                anim.SetFloat("Forward", xyVel.magnitude);
+                var xyVel = new Vector3(controller.velocity.x, 0, controller.velocity.z);
+                anim.SetFloat("Forward", xyVel.magnitude * 1.5f);
                 movementController.maxSpeed = walkSpeed;
                 attacking = false;
                 anim.SetBool("Attacking", false);
@@ -580,7 +580,7 @@ namespace WorldWizards.core.entity.gameObject
 
             if (isStep)
             {
-                controller.velocity = new Vector3(transform.forward.x * 5f, 7f, transform.forward.z * 5f);
+                controller.velocity = new Vector3(transform.forward.x * 2f, 8f, transform.forward.z * 2f);
             }
 
         }

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -54,7 +54,7 @@ namespace WorldWizards.core.manager
         /// </summary>
         /// <typeparam name="T">The type the retruned object must match</typeparam>
         /// <returns>The first registered matching object, or null if none can be found</returns>
-        public T GetAnInstance<T>() where  T: class // restricts it to ref tyoes, whsoe edfault is always null
+        public T GetAnInstance<T>() where  T: class // restricts it to ref tyoes, whose default is always null
         {
             Type t = typeof(T);
             if (registry.ContainsKey(t))
