@@ -3,7 +3,6 @@ using Pathfinding;
 
 using WorldWizards.core.manager;
 using System.Collections.Generic;
-using Pathfinding.RVO;
 using System.Linq;
 
 namespace WorldWizards.core.entity.gameObject
@@ -69,7 +68,7 @@ namespace WorldWizards.core.entity.gameObject
         Seeker seeker;
         WWSeeker target = null;
         SkinnedMeshRenderer[] rend;
-        CharacterController controller;
+        Rigidbody controller;
         //RVOController controller;
         FunnelModifier modifier;
         AIPath movementController;
@@ -111,7 +110,7 @@ namespace WorldWizards.core.entity.gameObject
 
             //get character components
             seeker = gameObject.GetComponent<Seeker>();
-            controller = gameObject.GetComponent<CharacterController>();
+            controller = gameObject.AddComponent<Rigidbody>();
             movementController = gameObject.AddComponent<AIPath>();
             anim = gameObject.GetComponent<Animator>();
             rend = gameObject.GetComponentsInChildren<SkinnedMeshRenderer>();
@@ -122,6 +121,9 @@ namespace WorldWizards.core.entity.gameObject
             movementController.slowWhenNotFacingTarget = true;
             movementController.repathRate = 1;
             //movementController.gravity = new Vector3(0,0,0);
+
+            controller.SetDensity(10);
+            controller.freezeRotation = true;
 
             //add a smoothing modifier
             modifier = gameObject.AddComponent<FunnelModifier>();
@@ -143,6 +145,8 @@ namespace WorldWizards.core.entity.gameObject
         {
             if (health > 0)
             {
+
+                StepUp();
 
                 ///////////////////////////////////////////////////// BRAIN ///////////////////////////////////////////////////////////////
                 //update mind on delay
@@ -205,7 +209,7 @@ namespace WorldWizards.core.entity.gameObject
                 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
                 //set animation
-                var xyVel = new Vector3(movementController.velocity.x, 0, controller.velocity.z);
+                var xyVel = new Vector3(Mathf.Abs(controller.velocity.x), Mathf.Abs(controller.velocity.y / 2), Mathf.Abs(controller.velocity.z));
                 anim.SetFloat("Forward", xyVel.magnitude);
                 movementController.maxSpeed = walkSpeed;
                 attacking = false;
@@ -396,7 +400,7 @@ namespace WorldWizards.core.entity.gameObject
                     }
                     break;
                 case 2:
-                    //flee
+                    // flee
                     Debug.Log("Flee");
                     state = "flee";
                     scripts = FindObjectsOfType<MonoBehaviour>().OfType<WWSeeker>();
@@ -414,20 +418,35 @@ namespace WorldWizards.core.entity.gameObject
 
                     break;
                 case 3:
-                    //regroup
+                    // regroup
+                    // move to the closest team member
                     Debug.Log("Regroup");
                     state = "regroup";
                     scripts = FindObjectsOfType<MonoBehaviour>().OfType<WWSeeker>();
+
+                    var dist = Mathf.Infinity;
+                    var closest_ally = this;
+
                     foreach (WWSeeker s in scripts)
                     {
                         if (s.team == team && s.alive)
                         {
-                            total++;
-                            pos += s.transform.position;
+                            var dist1 = (transform.position - s.transform.position).magnitude;
+
+                            //get closest enemy
+                            if (dist1 < dist)
+                            {
+                                dist = dist1;
+                                closest_ally = s;
+                            }
                         }
                     }
-                    movementController.destination = pos / total;
-                    movementController.canSearch = true;
+
+                    if (closest_ally != this)
+                    {
+                        movementController.destination = closest_ally.transform.position;
+                        movementController.canSearch = true;
+                    }
                     break;
             }
         }
@@ -526,6 +545,44 @@ namespace WorldWizards.core.entity.gameObject
                 }
             }
             return Mathf.Clamp(rating, 0, 1);
+        }
+
+        public void StepUp()
+        {
+            // local coordinate rotation around the Y axis to the given angle
+            // Quaternion rotation = Quaternion.AngleAxis(-20, Vector3.up);
+            // add the desired distance to the direction
+            //Vector3 addDistanceToDirection = rotation * transform.forward * 1;
+            var isStep = false;
+
+            var layer = 9;
+            var layermask = 1 << layer;
+
+            RaycastHit rayHit;
+
+            sight.origin = new Vector3(transform.position.x, transform.position.y + 0.15f, transform.position.z);
+            sight.direction = transform.forward;
+            
+            Debug.DrawLine(sight.origin, sight.origin + sight.direction * 1f, Color.white);
+            if (Physics.Raycast(sight, out rayHit, 1.6f, layermask))
+            {
+                isStep = true;
+            }
+
+            sight.origin = new Vector3(transform.position.x, transform.position.y + 0.3f, transform.position.z);
+            sight.direction = transform.forward;
+
+            Debug.DrawLine(sight.origin, sight.origin + sight.direction * 1.6f, Color.white);
+            if (Physics.Raycast(sight, out rayHit, 1.6f, layermask))
+            {
+                isStep = true;
+            }
+
+            if (isStep)
+            {
+                controller.velocity = new Vector3(transform.forward.x * 5f, 7f, transform.forward.z * 5f);
+            }
+
         }
 
         /*public void OnPathComplete(Path p)
