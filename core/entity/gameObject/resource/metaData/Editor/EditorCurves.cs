@@ -25,6 +25,7 @@ namespace WorldWizards.core.entity.gameObject
             myScript.health = EditorGUILayout.IntSlider("Health", myScript.health, 0, myScript.max_health);
             myScript.turnSpeed = EditorGUILayout.Slider("Turn Speed", myScript.turnSpeed, 1, 10);
             myScript.maxWalkSpeed = EditorGUILayout.Slider("Walk Speed", myScript.maxWalkSpeed, 1, 10);
+            myScript.damage = EditorGUILayout.IntSlider("Damage", myScript.damage, 1, 50);
             myScript.attackDistance = EditorGUILayout.Slider("Attack Range", myScript.attackDistance, 1, 10);
             myScript.aggroDistance = EditorGUILayout.Slider("Aggro Range", myScript.aggroDistance, 1, 100);
             myScript.deAggroDistance = EditorGUILayout.Slider("De-Aggro Range", myScript.deAggroDistance, 1, 100);

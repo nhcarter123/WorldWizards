@@ -55,11 +55,17 @@ namespace WorldWizards.core.entity.gameObject
         float walkSpeed = 0;
         float acceleration = 0.03f;
         float dist = 0;
+
+        // Delay before character fades out
+        int fadeDelay = 0;
+
+        //State of the character
         string state = "idle";
+
         WWSeeker closest_enemy;
-        int waypoint = 0;
         int waiting = 0;
         Vector3 targetLocation;
+        Vector3 positionPrevious;
         Ray sight;
         bool placed = false;
         IEnumerable<WWSeeker> scripts;
@@ -122,8 +128,10 @@ namespace WorldWizards.core.entity.gameObject
             movementController.repathRate = 1;
             //movementController.gravity = new Vector3(0,0,0);
 
-            controller.SetDensity(10);
+            controller.mass = 5;
             controller.freezeRotation = true;
+
+            positionPrevious = transform.position;
 
             //add a smoothing modifier
             modifier = gameObject.AddComponent<FunnelModifier>();
@@ -209,12 +217,15 @@ namespace WorldWizards.core.entity.gameObject
                 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
                 //set animation
-                var xyVel = new Vector3(controller.velocity.x, 0, controller.velocity.z);
-                anim.SetFloat("Forward", xyVel.magnitude * 1.5f);
+                
+                var xyVel = Vector3.Distance(transform.position, positionPrevious) * 30f;
+                anim.SetFloat("Forward", xyVel);
                 movementController.maxSpeed = walkSpeed;
                 attacking = false;
                 anim.SetBool("Attacking", false);
-                transform.position += new Vector3(0, -0.1f, 0);
+                //transform.position += new Vector3(0, -0.1f, 0);
+
+                positionPrevious = transform.position;
 
                 if (state == "attack")
                 {
@@ -294,16 +305,20 @@ namespace WorldWizards.core.entity.gameObject
             {
                 if (fade)
                 {
-                    for (var i = 0; i < rend.Length; i++)
+                    if (fadeDelay > 120)
                     {
-                        Color color = rend[i].material.GetColor("_Color");
-                        color.a -= 0.005f;
-                        rend[i].material.SetColor("_Color", color);
-                        if (color.a <= 0)
+                        for (var i = 0; i < rend.Length; i++)
                         {
-                            Destroy(gameObject);
+                            Color color = rend[i].material.GetColor("_Color");
+                            color.a -= 0.005f;
+                            rend[i].material.SetColor("_Color", color);
+                            if (color.a <= -0.5)
+                            {
+                                Destroy(gameObject);
+                            }
                         }
                     }
+                    fadeDelay++;
                 }
             }
         }
@@ -336,6 +351,7 @@ namespace WorldWizards.core.entity.gameObject
         {
             alive = false;
             anim.SetBool("Dead", true);
+            movementController.canMove = false;
         }
 
         public void Death()
@@ -352,9 +368,12 @@ namespace WorldWizards.core.entity.gameObject
 
         public void AttackEnd()
         {
-            target.health -= damage;
-            attacking = false;
-            anim.SetBool("Attacking", attacking);
+            if (target != null)
+            {
+                target.health -= damage;
+                attacking = false;
+                anim.SetBool("Attacking", attacking);
+            }
         }
 
         private float CalculateRating(int rating_type)
